@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+// A stand-in for the Feishu CLI, for testing the town's bridge without Feishu: it "receives" the events a test appends
+// to a file, records every reply it is asked to send, and "downloads" files it makes up.
+const fs = require("fs");
+const args = process.argv.slice(2);
+const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
+const log = (entry) => fs.appendFileSync(process.env.FAKE_LARK_LOG, JSON.stringify(entry) + "\n");
+if (args[0] === "event" && args[1] === "consume") {
+  let read = 0;
+  process.stderr.write("[event] ready event_key=" + args[2] + "\n");
+  setInterval(() => {
+    const lines = fs.readFileSync(process.env.FAKE_LARK_EVENTS, "utf8").split("\n").filter(Boolean);
+    for (const line of lines.slice(read)) process.stdout.write(line + "\n");
+    read = lines.length;
+  }, 150);
+  process.stdin.on("end", () => process.exit(0));
+  process.stdin.resume();
+} else if (args[1] === "+messages-reply") {
+  let said = "";
+  process.stdin.on("data", (chunk) => (said += chunk)).on("end", () => {
+    log({ reply: value("--message-id"), text: said, key: value("--idempotency-key"), textFlag: value("--text"), as: value("--as"), file: value("--file"), image: value("--image"), cwd: process.cwd() });
+    console.log(JSON.stringify({ ok: true, data: { message_id: "om_reply" } }));
+  });
+} else if (args[1] === "+messages-resources-download") {
+  const [key, out, type] = [value("--file-key"), value("--output"), value("--type")];
+  log({ download: key, type, message: value("--message-id"), cwd: process.cwd() });
+  if (key.includes("gone")) {
+    console.log(JSON.stringify({ ok: false, error: { type: "api", message: "resource not found" } }));
+    process.exit(1);
+  }
+  const saved = out + (type === "image" ? ".png" : "");
+  fs.writeFileSync(saved, key.includes("toobig") ? Buffer.alloc(21 * 1024 * 1024) : `contents of ${key}\n`);
+  console.log(JSON.stringify({ ok: true, data: { saved_path: key.includes("abs") ? require("path").resolve(saved) : saved, size_bytes: fs.statSync(saved).size } }));
+} else {
+  console.log(JSON.stringify({ ok: false, error: { message: "the fake doesn't know: " + args.join(" ") } }));
+  process.exit(1);
+}

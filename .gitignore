@@ -1,0 +1,46 @@
+# Rollback copies from before there was a repository.
+backups/
+.DS_Store
+__pycache__/
+
+# Models: only the ones the town draws come with it.
+models/*
+!models/*.glb
+# The list of them, for where there is no server to look in the folder.
+!models/index.json
+# The two earlier pages (/yard, /flat) are no longer kept up; they and the models only they use stay on the machine
+# they were made on. The server serves those pages only where the files are still there.
+town3d.html
+town3d.js
+flat.html
+models/cage.glb
+models/clocktower.glb
+models/column.glb
+models/conveyor.glb
+models/desk.glb
+models/factory.glb
+models/gantry.glb
+models/gatehouse.glb
+models/girder.glb
+models/rack.glb
+models/sorter_arm.glb
+models/station.glb
+models/table.glb
+models/tote.glb
+models/tree_a.glb
+models/tree_b.glb
+models/truck.glb
+models/van.glb
+models/warehouse.glb
+# Figures made to look like particular Agent products. Put one in models/ under these names and the town uses it;
+# without them every Agent is the plain robot, painted in its kind's colour.
+models/agent_claude.glb
+models/agent_codex.glb
+models/fine_agent_claude.glb
+models/fine_agent_codex.glb
+
+# Helpers that only make sense beside the sandbox hub this was built against.
+tools/connect-feishu.mjs
+tools/wait-run.mjs
+tools/wait-answer.mjs
+tools/hub-e2e/
